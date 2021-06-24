@@ -1,0 +1,170 @@
+#!/bin/sh -e
+#
+# 2021 Dennis Camera (dennis.camera at ssrq-sds-fds.ch)
+#
+# This file is part of cdist.
+#
+# cdist is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# cdist is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with cdist. If not, see <http://www.gnu.org/licenses/>.
+#
+
+exist_user='existdb'
+
+version_should=$(cat "${__object:?}/parameter/version")
+
+os=$(cat "${__global:?}/explorer/os")
+init=$(cat "${__global:?}/explorer/init")
+
+# shellcheck disable=SC2034
+IFS='	' read -r version_is sha256_should size_should <<EOF
+$(
+	case ${version_should}
+	in
+		(latest)
+			tail -n 1 "${__type:?}/files/cksums.tsv"
+			;;
+		(*)
+			awk -F '\t' -v vers="${version_should}" '$1 == vers' "${__type:?}/files/cksums.tsv"
+			;;
+	esac
+)
+EOF
+
+test -n "${version_is}" || {
+	if test "${version_should}" != 'latest'
+	then
+		printf 'Invalid --version: %s\n' "${version_should}" >&2
+	else
+		printf 'No eXist-db versions are currently known.\n' >&2
+	fi
+	exit 1
+}
+
+
+case ${os}
+in
+	(debian|devuan|ubuntu)
+		opt_package_name="exist-${version_is:?}"
+		exist_home="/opt/${opt_package_name:?}"
+
+		exist_data_base='/var/lib/exist'
+
+		# we require bzip2 to unpack the eXist DB dist tarball
+		__package_apt bzip2
+		exist_download_require='__package_apt/bzip2'
+
+		__package_apt default-jre
+		;;
+	(*)
+		# This type has only been tested on Debian
+		: "${__type:?}"  # make shellcheck happy
+		printf "Your operating system (%s) is currently not supported by this type (%s)\n" "${os}" "${__type##*/}" >&2
+		printf "Please contribute an implementation for it if you can.\n" >&2
+		exit 1
+		;;
+esac
+
+download_required=true  # FIXME
+
+exist_dist_url="https://github.com/eXist-db/exist/releases/download/eXist-${version_is:?}/exist-distribution-${version_is:?}-unix.tar.bz2"
+
+if ${download_required}
+then
+	__download "/tmp/${exist_dist_url##*/}" \
+		--url "${exist_dist_url}" \
+		--download remote \
+		--sum "sha256:${sha256_should:?}"
+	exist_download_require="${exist_download_require-}${exist_download_require:+ }__download/tmp/${exist_dist_url##*/}"
+
+	require=${exist_download_require} \
+	__unpack "/tmp/${exist_dist_url##*/}" \
+		--destination "${exist_home:?}" \
+		--sum-file "${exist_home}/.${exist_dist_url##*/}.cdist__unpack_sum" \
+		--tar-strip 1 \
+		--tar-extra-args ' -o'
+	exist_download_require="${exist_download_require-}${exist_download_require:+ }__unpack/tmp/${exist_dist_url##*/}"
+fi
+
+exist_data="${exist_data_base:?}/${version_is:?}"
+require="__user/${exist_user:?}" \
+__directory "${exist_data}" \
+	--owner "${exist_user}" --group "${exist_user}" --mode 0755
+
+
+################################################################################
+# User
+
+require=${exist_download_require-} \
+__user "${exist_user}" \
+	--system \
+	--shell /sbin/nologin \
+	--comment 'eXist-db service user' \
+	--home "${exist_data_base:?}" \
+	--create-home
+
+
+################################################################################
+# Set up eXist-db
+
+require="${exist_download_require-} __user/${exist_user} __directory/${exist_data}"
+export require
+
+# Fix up data/ link
+__link "${exist_home:?}/data" \
+	--type symbolic \
+	--source "${exist_data:?}"
+
+# Fix up logs/ link
+__directory "/var/opt/${opt_package_name}/log/${version_is:?}" \
+	--owner "${exist_user}" --group "${exist_user}" --mode 0750 \
+	--parents
+
+__directory "${exist_home:?}/logs" \
+	--state absent
+
+require="__directory/${exist_home:?}/logs __directory/var/opt/log/exist/${version_is:?}" \
+__link "${exist_home:?}/logs" \
+	--type symbolic \
+	--source "/var/opt/log/exist/${version_is:?}"
+
+
+case ${os}
+in
+	(debian|devuan|ubuntu)
+		case ${init}
+		in
+			(systemd)
+				echo 'not implemented' >&2
+				exit 1
+				;;
+			(*)
+				# install the sysvinit scripts
+
+				__file /etc/init.d/exist --state present \
+					   --owner 0 --group 0 --mode 0755 \
+					   --source "${__type:?}/files/init/debian/base.init"
+
+				__file "/etc/init.d/${opt_package_name:?}" --state present \
+					   --owner 0 --group 0 --mode 0755 \
+					   --source "${__type:?}/files/init/debian/exist5.init"
+
+				# __file /etc/default/existdb
+				# TODO: Set JAVA_HOME
+				;;
+			esac
+		;;
+	(*)
+		printf 'Unsupported OS %s: init script cannot be installed.\n' "${os}" >&2
+		exit 1
+		;;
+esac

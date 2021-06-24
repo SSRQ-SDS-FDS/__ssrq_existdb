@@ -1,0 +1,85 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          existdb
+# Required-Start:    $local_fs $remote_fs $network $time
+# Required-Stop:     $local_fs $remote_fs $network $time
+# Should-Start:      $syslog
+# Should-Stop:       $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: eXist Native XML Database and Application Platform
+### END INIT INFO
+
+init_name=${0##*/}
+init_basename=${init_name%-*}
+exist_version=${init_name##*-}
+
+service_desc='eXist native XML database'
+
+EXIST_BASE=/opt/existdb
+EXIST_HOME="${EXIST_BASE:?}/${exist_version:?}"
+
+EXIST_USER=existdb
+EXIST_GROUP=existdb
+
+PIDFILE="/var/run/${init_name}.pid"
+
+if test -r "/etc/default/${init_basename}"
+then
+	# shellcheck source=/dev/null
+	. "/etc/default/${init_basename}"
+fi
+if test -r "/etc/default/${init_name}"
+then
+	# shellcheck source=/dev/null
+	. "/etc/default/${init_name}"
+fi
+
+export JAVA_OPTS
+
+. /lib/lsb/init-functions
+
+case $1
+in
+	(start)
+		log_daemon_msg "Starting ${service_desc}" "${init_name}"
+		start-stop-daemon --start --quiet --background --name "${NAME}" \
+			--exec "${EXIST_HOME:?}/bin/startup.sh" \
+			--make-pidfile --pidfile "${PIDFILE}" \
+			--user "${EXIST_USER:?}" \
+			--group "${EXIST_GROUP:?}"
+		case $?
+		in
+			(0) log_end_msg 0 ;;
+			(1) log_progress_msg "already started"
+				log_end_msg 0 ;;
+			(*) log_end_msg 1 ;;
+		esac
+		;;
+	(stop)
+		log_daemon_msg "Stopping ${service_desc}" "${init_name}"
+		start-stop-daemon --stop --quiet \
+			--remove-pidfile --pidfile "${PIDFILE}"
+		case $?
+		in
+			(0) log_end_msg 0 ;;
+			(1) log_progress_msg "already stopped"
+				log_end_msg 0 ;;
+			(*) log_end_msg 1 ;;
+		esac
+		;;
+	(restart|force-reload)
+		"$0" stop &&
+		"$0" start
+		;;
+	(status)
+		status_of_proc -p "${PIDFILE}" "${init_name}" "${init_name}"
+		exit
+		;;
+	(*)
+		echo "Usage: $0 {start|stop|restart|status} [version ...]"
+		exit 1
+		;;
+esac
+
+exit 0
