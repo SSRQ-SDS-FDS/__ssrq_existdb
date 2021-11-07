@@ -57,7 +57,7 @@ in
 		opt_package_name="exist-${version_is:?}"
 		exist_home="/opt/${opt_package_name:?}"
 
-		exist_data_base='/var/lib/exist'
+		exist_data_base=/var/opt/lib/exist
 
 		# we require bzip2 to unpack the eXist DB dist tarball
 		__package_apt bzip2
@@ -125,7 +125,8 @@ __link "${exist_home:?}/data" \
 	--source "${exist_data:?}"
 
 # Fix up logs/ link
-__directory "/var/opt/${opt_package_name}/log/${version_is:?}" \
+require="__user/${exist_user}" \
+__directory "/var/opt/log/exist/${version_is:?}" \
 	--owner "${exist_user}" --group "${exist_user}" --mode 0750 \
 	--parents
 
