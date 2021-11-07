@@ -54,7 +54,8 @@ test -n "${version_is}" || {
 case ${os}
 in
 	(debian|devuan|ubuntu)
-		opt_package_name="exist-${version_is:?}"
+		package_name='exist'
+		opt_package_name="${package_name:?}-${version_is:?}"
 		exist_home="/opt/${opt_package_name:?}"
 
 		exist_data_base=/var/opt/lib/exist
@@ -63,6 +64,7 @@ in
 		__package_apt bzip2
 		exist_download_require='__package_apt/bzip2'
 
+		# Java
 		__package_apt default-jre
 		;;
 	(*)
@@ -145,19 +147,25 @@ in
 		case ${init}
 		in
 			(systemd)
-				echo 'not implemented' >&2
+				echo 'support for systemd is not implemented' >&2
 				exit 1
 				;;
 			(*)
 				# install the sysvinit scripts
 
 				__file /etc/init.d/exist --state present \
-					   --owner 0 --group 0 --mode 0755 \
-					   --source "${__type:?}/files/init/debian/base.init"
+					--owner 0 --group 0 --mode 0755 \
+					--source "${__type:?}/files/init/debian/base.init"
 
-				__file "/etc/init.d/${opt_package_name:?}" --state present \
-					   --owner 0 --group 0 --mode 0755 \
-					   --source "${__type:?}/files/init/debian/exist5.init"
+				sed \
+					-e "s#%%OPT_PACKAGE_NAME%%#${opt_package_name:?}#g" \
+					-e "s/%%PACKAGE_VERSION%%/${version_is:?}/g" \
+					-e "s#%%EXIST_HOME%%#${exist_home:?}#g" \
+					-e "s:%%EXIST_USER%%:${exist_user:?}:g" \
+					<"${__type:?}/files/init/debian/exist5.init" \
+				| __file "/etc/init.d/${opt_package_name:?}" --state present \
+					  --owner 0 --group 0 --mode 0755 \
+					  --source -
 
 				# __file /etc/default/existdb
 				# TODO: Set JAVA_HOME

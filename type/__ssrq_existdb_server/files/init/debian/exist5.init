@@ -1,26 +1,22 @@
 #!/bin/sh
 ### BEGIN INIT INFO
-# Provides:          existdb
+# Provides:          %%OPT_PACKAGE_NAME%%
 # Required-Start:    $local_fs $remote_fs $network $time
 # Required-Stop:     $local_fs $remote_fs $network $time
 # Should-Start:      $syslog
 # Should-Stop:       $syslog
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: eXist Native XML Database and Application Platform
+# Short-Description: eXist (version %%PACKAGE_VERSION%%) Native XML Database and Application Platform
 ### END INIT INFO
 
 init_name=${0##*/}
 init_basename=${init_name%-*}
-exist_version=${init_name##*-}
 
-service_desc='eXist native XML database'
+service_desc="eXist (version %%PACKAGE_VERSION%%) native XML database"
 
-EXIST_BASE=/opt/existdb
-EXIST_HOME="${EXIST_BASE:?}/${exist_version:?}"
-
-EXIST_USER=existdb
-EXIST_GROUP=existdb
+EXIST_HOME='%%EXIST_HOME%%'
+EXIST_USER='%%EXIST_USER%%'
 
 PIDFILE="/var/run/${init_name}.pid"
 
@@ -46,8 +42,7 @@ in
 		start-stop-daemon --start --quiet --background --name "${NAME}" \
 			--exec "${EXIST_HOME:?}/bin/startup.sh" \
 			--make-pidfile --pidfile "${PIDFILE}" \
-			--user "${EXIST_USER:?}" \
-			--group "${EXIST_GROUP:?}"
+			--chuid "${EXIST_USER:?}"
 		case $?
 		in
 			(0) log_end_msg 0 ;;
@@ -77,7 +72,7 @@ in
 		exit
 		;;
 	(*)
-		echo "Usage: $0 {start|stop|restart|status} [version ...]"
+		echo "Usage: $0 {start|stop|restart|status}"
 		exit 1
 		;;
 esac
