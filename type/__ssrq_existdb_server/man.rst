@@ -14,15 +14,15 @@ This space intentionally left blank.
 
 REQUIRED PARAMETERS
 -------------------
-version
-   The version number of eXist to install or ``latest``.
-
-   Defaults to ``latest``.
+None.
 
 
 OPTIONAL PARAMETERS
 -------------------
-None.
+version
+   The version number of eXist to install or ``latest``.
+
+   Defaults to ``latest``.
 
 
 BOOLEAN PARAMETERS
