@@ -4,27 +4,12 @@
 version_should=$(cat "${__object:?}/parameter/version")
 
 # shellcheck disable=SC2034
-IFS='	' read -r version_is sha256_should size_should <<EOF
-$(
-	case ${version_should}
-	in
-		(latest)
-			tail -n 1 "${__type:?}/files/cksums.tsv"
-			;;
-		(*)
-			awk -F '\t' -v vers="${version_should}" '$1 == vers' "${__type:?}/files/cksums.tsv"
-			;;
-	esac
-)
+IFS='	' read -r version_selected sha256_should size_should <<EOF
+$(awk -F '\t' -v vers="${version_should}" '$1 == vers' "${__type:?}/files/cksums.tsv")
 EOF
 
-test -n "${version_is}" || {
-	if test "${version_should}" != 'latest'
-	then
-		printf 'Invalid --version: %s\n' "${version_should}" >&2
-	else
-		printf 'No eXist-db versions are currently known.\n' >&2
-	fi
+test -n "${version_selected}" || {
+	printf 'Invalid --version: %s\n' "${version_should}" >&2
 	exit 1
 }
 
@@ -34,13 +19,13 @@ test -n "${version_is}" || {
 
 exist_user='existdb'
 
+package_name='exist'
+opt_package_name="${package_name:?}-${version_selected:?}"
+exist_home="/opt/${opt_package_name:?}"  # sync with explorer/conf_values
+
 case $(cat "${__global:?}/explorer/os")
 in
 	(debian|devuan|ubuntu)
-		package_name='exist'
-		opt_package_name="${package_name:?}-${version_is:?}"
-		exist_home="/opt/${opt_package_name:?}"
-
 		exist_data_base=/var/opt/lib/exist
 
 		case $(cat "${__global:?}/explorer/init")
@@ -68,5 +53,5 @@ esac
 
 
 # make shellcheck happy (unused variables) and ensure all have been set
-: "${version_should:?}" "${version_is:?}" "${sha256_should:?}" "${size_should:?}"
+: "${version_should:?}" "${version_should:?}" "${sha256_should:?}" "${size_should:?}"
 : "${exist_user:?}" "${exist_home:?}" "${exist_data_base:?}" "${exist_init_type:?}"

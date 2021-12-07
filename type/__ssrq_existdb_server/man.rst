@@ -14,15 +14,13 @@ This space intentionally left blank.
 
 REQUIRED PARAMETERS
 -------------------
-None.
+version
+   The version number of eXist-db to install.
 
 
 OPTIONAL PARAMETERS
 -------------------
-version
-   The version number of eXist to install or ``latest``.
-
-   Defaults to ``latest``.
+None.
 
 
 BOOLEAN PARAMETERS
