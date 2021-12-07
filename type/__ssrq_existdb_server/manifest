@@ -77,7 +77,6 @@ __user "${exist_user:?}" \
 ################################################################################
 # Create and patch directories
 
-exist_data="${exist_data_base:?}/${version_selected:?}"
 require="__user/${exist_user:?}" \
 __directory "${exist_data}" \
 	--owner "${exist_user:?}" --group "${exist_user:?}" --mode 0755

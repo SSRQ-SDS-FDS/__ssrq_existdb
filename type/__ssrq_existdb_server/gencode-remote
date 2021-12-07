@@ -17,3 +17,69 @@
 # You should have received a copy of the GNU General Public License
 # along with cdist. If not, see <http://www.gnu.org/licenses/>.
 #
+
+quote() { printf "'%s'" "$(printf '%s' "$*" | sed -e "s/'/'\\\\''/g")"; }
+
+. "${__type:?}/files/params.sh"
+
+
+################################################################################
+# Update eXist's conf.xml
+
+conf_should=$(
+	cset() { printf '%s=%s\n' "$1" "$2"; }
+
+	{
+		if test ! -f "${__object:?}/parameter/no-sync-on-commit"
+		then
+			cset sync-on-commit yes
+		else
+			cset sync-on-commit no
+		fi
+
+		for _opt in cache-size page-size sync-period
+		do
+			if test -f "${__object:?}/parameter/${_opt}"
+			then
+				cset "${_opt}" "$(head -n1 "${__object:?}/parameter/${_opt}")"
+			fi
+		done
+
+		cset files "${exist_data:?}"
+	} | LC_ALL=C sort -t= -k1)
+
+
+if ! {
+		printf '%s\n' "${conf_should}"
+		# unused options are taken from the explorer so that cmp works
+		printf '%s\n' "${conf_should}" \
+		| LC_ALL=C join -t= -v1 -1 1 -2 1 "${__object:?}/explorer/conf_values" -
+	} | LC_ALL=C sort -t= -k1 | cmp -s "${__object:?}/explorer/conf_values" -
+then
+	# conf must be updated
+
+	# quote $conf_should values
+	param_should=$(
+		IFS='='
+		while read -r _k _v
+		do
+			printf ' %s=%s' "${_k}" "$(quote "${_v}")"
+		done <<-EOF
+		${conf_should}
+		EOF
+		)
+
+	cat <<-CODE
+	saxon_jar=\$(find $(quote "${exist_home:?}/lib") -name 'Saxon-HE-*.jar' -prune | head -n1)
+	test -s "\${saxon_jar}" || {
+	    echo 'Cannot find Saxon' >&2
+	    exit 1
+	}
+
+	java -jar "\${saxon_jar}" -xsl:- -s:$(quote "${exist_conf:?}") -o:$(quote "${exist_conf:?}.tmp") ${param_should# } <<'EOF' \
+	&& cat $(quote "${exist_conf:?}.tmp") >$(quote "${exist_conf:?}") || exit
+	$(cat "${__type:?}/files/update-conf.xsl")
+	EOF
+	rm -f $(quote "${exist_conf}.tmp")
+	CODE
+fi

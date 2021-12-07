@@ -1,0 +1,57 @@
+#!/bin/sh -e
+#
+# 2021 Dennis Camera (dennis.camera at ssrq-sds-fds.ch)
+#
+# This file is part of cdist.
+#
+# cdist is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# cdist is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with cdist. If not, see <http://www.gnu.org/licenses/>.
+#
+# This explorer returns the parameters currently set for a given job.
+#
+# Prints the current values of selected config options
+# The format is key=value with the separator being the first `=' on the line.
+#
+
+version_should=$(cat "${__object:?}/parameter/version")
+
+# NOTE: Sync these values with files/params.sh
+package_name='exist'
+opt_package_name="${package_name:?}-${version_should:?}"
+exist_home="/opt/${opt_package_name:?}"
+exist_conf="${exist_home:?}/etc/conf.xml"
+
+# no file, no values
+test -e "${exist_conf}" || exit 0
+
+# no java, no check
+command -v java >/dev/null || exit 0
+
+saxon_jar=$(find "${exist_home:?}/lib" -name 'Saxon-HE-*.jar' -prune | head -n1)
+# no saxon, no check
+test -s "${saxon_jar}" || exit 0
+
+
+java -cp "${saxon_jar}" net.sf.saxon.Query -s:"${exist_conf:?}" -q:- <<'EOF' | sort -t= -k1
+declare namespace saxon="http://saxon.sf.net/";
+declare option saxon:output "method=text";
+declare option saxon:output "encoding=utf-8";
+
+(
+  "cache-size=" || /exist/db-connection/@cacheSize,
+  "files=" || /exist/db-connection/@files,
+  "page-size=" ||/exist/db-connection/@pageSize,
+  "sync-period=" || /exist/db-connection/pool/@sync-period,
+  "sync-on-commit=" || /exist/db-connection/recovery/@sync-on-commit
+) => string-join("&#10;")
+EOF

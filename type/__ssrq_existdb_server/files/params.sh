@@ -13,15 +13,22 @@ test -n "${version_selected}" || {
 	exit 1
 }
 
+test "${version_should}" = "${version_selected}" || {
+	printf '"%s" should be equal to "%s"\n' \
+		"${version_should}" "${version_selected}" >&2
+	exit 1
+}
+
 
 ################################################################################
 # Define OS-specific variables
 
 exist_user='existdb'
 
+# sync the following variables with explorer/conf_values
 package_name='exist'
-opt_package_name="${package_name:?}-${version_selected:?}"
-exist_home="/opt/${opt_package_name:?}"  # sync with explorer/conf_values
+opt_package_name="${package_name:?}-${version_should:?}"
+exist_home="/opt/${opt_package_name:?}"
 
 case $(cat "${__global:?}/explorer/os")
 in
@@ -51,7 +58,10 @@ in
 		;;
 esac
 
+exist_data="${exist_data_base:?}/${version_selected:?}"
+exist_conf=${exist_home:?}/etc/conf.xml  # sync with conf_values explorer
 
 # make shellcheck happy (unused variables) and ensure all have been set
 : "${version_should:?}" "${version_should:?}" "${sha256_should:?}" "${size_should:?}"
 : "${exist_user:?}" "${exist_home:?}" "${exist_data_base:?}" "${exist_init_type:?}"
+: "${exist_data:?}" "${exist_conf:?}"
