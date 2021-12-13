@@ -21,6 +21,8 @@
 join() (IFS=$1; shift; echo "$*")
 quote() { printf "'%s'" "$(printf '%s' "$*" | sed -e "s/'/'\\\\''/g")"; }
 
+mkdir "${__object:?}/files"
+
 exist_home=$(cat "${__object:?}/parameter/exist-home")
 
 remote_find_saxon() {
@@ -36,14 +38,6 @@ remote_find_saxon() {
 	_found_saxon=true
 }
 
-if test -f "${__object:?}/parameter/name"
-then
-	job_name=$(cat "${__object:?}/parameter/name")
-else
-	job_name=${__object_id?:}
-fi
-
-
 state_should=$(cat "${__object:?}/parameter/state")
 state_is=$(sh "${__type:?}/files/job_state.sh")
 
@@ -54,51 +48,49 @@ in
 	(present)
 		exist_conf=${exist_home:?}/etc/conf.xml
 
-		# using `<' as the separator is kinda stupid, but it's the only
-		# character not allowed in XML attributes…
-		# https://www.w3.org/TR/REC-xml/#NT-AttValue
-		params=$(LC_ALL=C tr '\n' '<' <"${__object:?}/parameter/parameter")
-		params=${params%<}
+		"${__type:?}/files/gen_job_xml.sh" >"${__object:?}/files/job.xml"
 
-		job_args=$(
-			add_arg() {
-				_args=${_args-}${_args:+ }"$1"="$(quote "$2")"
-			}
-			add_arg_param() {
-				if test -f "${__object:?}/parameter/$2"
-				then
-					add_arg "$1" "$(cat "${__object:?}/parameter/$2")"
-				fi
-			}
-
-			add_arg name "${job_name}"
-			add_arg params "${params}"
-
-			add_arg_param class class
-			add_arg_param cron-trigger cron
-			add_arg_param type type
-			add_arg_param xquery xquery
-
-			if test -f "${__object:?}/parameter/unschedule-on-exception"
-			then
-				add_arg unschedule-on-exception yes
-			else
-				add_arg unschedule-on-exception no
-			fi
-
-			echo "${_args}")
+		if cmp -s "${__object:?}/explorer/job.xml" "${__object:?}/files/job.xml"
+		then
+			# no difference
+			exit 0
+		fi
 
 		remote_find_saxon
 		cat <<-CODE
-		java -jar "\${saxon_jar}" -xsl:- -s:$(quote "${exist_conf}") -o:$(quote "${exist_conf}.tmp") ${job_args} <<'EOF' \
+		java -jar "\${saxon_jar}" -xsl:- -s:$(quote "${exist_conf}") -o:$(quote "${exist_conf}.tmp") <<'EOF' \
 		&& cat $(quote "${exist_conf}.tmp") >$(quote "${exist_conf}") || exit
-		$(cat "${__type:?}/files/add-job.xsl")
+		$(
+			# NOTE: Patch the XSLT script to include the job XML instead of
+			#       loading it from a file so that the file does not need to
+			#       copied to the target first.
+			awk -v job_xml="${__object:?}/files/job.xml" '
+			/<xsl:param name="job"/ {
+				print "<xsl:variable name=\"job\">"
+				while (getline l < job_xml) print l
+				close(job_xml)
+				print "</xsl:variable>"
+				next
+			}
+			{ print }
+			' "${__type:?}/files/set-job.xsl"
+		)
 		EOF
 		rm -f $(quote "${exist_conf}.tmp")
 		CODE
 		;;
 	(absent)
 		exist_conf=${exist_home:?}/etc/conf.xml
+
+		# only need to delete job if it exists
+		test -s "${__object:?}/explorer/job.xml" || exit 0
+
+		if test -f "${__object:?}/parameter/name"
+		then
+			job_name=$(cat "${__object:?}/parameter/name")
+		else
+			job_name=${__object_id?:}
+		fi
 
 		remote_find_saxon
 		cat <<-CODE

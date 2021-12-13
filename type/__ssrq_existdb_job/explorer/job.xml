@@ -1,0 +1,75 @@
+#!/bin/sh -e
+#
+# 2021 Dennis Camera (dennis.camera at ssrq-sds-fds.ch)
+#
+# This file is part of cdist.
+#
+# cdist is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# cdist is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with cdist. If not, see <http://www.gnu.org/licenses/>.
+#
+# This explorer prints the normalized XML for a given job.
+#
+
+exist_home=$(cat "${__object:?}/parameter/exist-home")
+exist_conf="${exist_home}/etc/conf.xml"
+
+# no file, no job
+test -e "${exist_conf}" || exit 0
+
+# no java, no check
+command -v java >/dev/null || exit 0
+
+saxon_jar=$(find "${exist_home:?}/lib" -name 'Saxon-HE-*.jar' -prune | head -n1)
+# no saxon, no check
+test -s "${saxon_jar}" || exit 0
+
+
+if test -f "${__object:?}/parameter/name"
+then
+	job_name=$(cat "${__object:?}/parameter/name")
+else
+	job_name=${__object_id?:}
+fi
+
+# Extract job XML from conf.xml
+java -cp "${saxon_jar}" net.sf.saxon.Query -s:"${exist_conf:?}" -q:- <<'EOF' name="${job_name}"
+xquery version "3.1";
+
+declare namespace saxon="http://saxon.sf.net/";
+declare option saxon:output "method=xml";
+declare option saxon:output "encoding=utf-8";
+declare option saxon:output "indent=no";
+declare option saxon:output "omit-xml-declaration=yes";
+
+declare variable $name as xs:string external;
+
+declare function local:normalize-tree($tree as node()*) {
+	for $node in $tree
+	return
+		typeswitch ($node)
+			case text()
+				return normalize-space($node)
+			case element(*)
+				return
+					element {node-name($node)} {
+						for $attr in $node/@*
+						order by name($attr)
+						return $attr,
+						local:normalize-tree($node/node())
+					}
+			default
+				return ()
+};
+
+local:normalize-tree(/exist/scheduler/job[@name = $name])
+EOF
