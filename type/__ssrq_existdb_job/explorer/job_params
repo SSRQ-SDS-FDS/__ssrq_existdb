@@ -1,0 +1,65 @@
+#!/bin/sh -e
+#
+# 2021 Dennis Camera (dennis.camera at ssrq-sds-fds.ch)
+#
+# This file is part of cdist.
+#
+# cdist is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# cdist is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with cdist. If not, see <http://www.gnu.org/licenses/>.
+#
+# This explorer prints the parameters currently set for a given job.
+# The format is key=value with the separator being the first `=' on the line.
+#
+
+exist_home=$(cat "${__object:?}/parameter/exist-home")
+exist_conf="${exist_home}/etc/conf.xml"
+
+# no file, no job
+test -e "${exist_conf}" || exit 0
+
+# no java, no check
+command -v java >/dev/null || exit 0
+
+saxon_jar=$(find "${exist_home:?}/lib" -name 'Saxon-HE-*.jar' -prune | head -n1)
+# no saxon, no check
+test -s "${saxon_jar}" || exit 0
+
+
+if test -f "${__object:?}/parameter/name"
+then
+	job_name=$(cat "${__object:?}/parameter/name")
+else
+	job_name=${__object_id?:}
+fi
+
+# Extract job parameters from conf.xml
+java -cp "${saxon_jar}" net.sf.saxon.Query -s:"${exist_conf:?}" -q:- <<'EOF' name="${job_name}" | sort -t= -k1 >&2
+declare namespace saxon="http://saxon.sf.net/";
+declare option saxon:output "method=text";
+declare option saxon:output "encoding=utf-8";
+declare option saxon:output "omit-xml-declaration=yes";
+
+declare variable $name as xs:string external;
+
+declare variable $job := /exist/scheduler/job[@name = $name];
+
+(: Check if there is only one matching job, because it will mess up the result :)
+if (count($job) > 1) then
+  fn:error(xs:QName("NameCollision"), "There are " || count($job) || " jobs with name: " || $name)
+  (: FIXME: Saxon terminates with exit code 0 although an error occurred -.- :)
+else
+  (
+    for $param in $job/@* return (name($param) || "=" || $param),
+    "params=" || ((for $param in $job/parameter return ($param/@name || "=" || $param/@value)) => string-join("&#60;"))
+  ) => string-join("&#10;")
+EOF

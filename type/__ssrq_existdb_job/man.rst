@@ -8,7 +8,11 @@ cdist-type__ssrq_existdb_job - Manage eXist-db jobs
 
 DESCRIPTION
 -----------
-This space intentionally left blank.
+This type can be used to manage eXist-db scheduler jobs.
+
+Make sure that this type is executed after the
+:strong:`cdist-type__ssrq_existdb_server`\ (7) object, because both manipulate
+the same config file.
 
 
 REQUIRED PARAMETERS
@@ -25,8 +29,8 @@ type
    ``user``
       may be scheduled at any time and may be mutually exclusive or
       non-exclusive
-version
-   the version of the installed eXist-db server for which this job should be
+exist-home
+   the installation path of the eXist-db server for which this job should be
    managed.
 
    cf. :strong:`cdist-type__ssrq_existdb_server`\ (7)
@@ -42,6 +46,12 @@ class
    This parameter is mutually exclusive with ``--xquery``.
 cron
    the cron specification when this job should be executed.
+
+   cf. `<http://www.exist-db.org/exist/apps/doc/scheduler#cron-format>`_.
+name
+   the name of the jobs
+
+   Defaults to: ``__object_id``
 parameter
    | A parameter to set for this job (refer to the documentation for acceptable parameters).
    | The value must me of the form ``key=value``.

@@ -17,16 +17,3 @@
 # You should have received a copy of the GNU General Public License
 # along with cdist. If not, see <http://www.gnu.org/licenses/>.
 #
-
-
-os=$(cat "${__global:?}/explorer/os")
-
-case ${os}
-in
-	(*)
-		: "${__type:?}"  # make shellcheck happy
-		printf "Your operating system (%s) is currently not supported by this type (%s)\n" "$os" "${__type##*/}" >&2
-		printf "Please contribute an implementation for it if you can.\n" >&2
-		exit 1
-		;;
-esac
