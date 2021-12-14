@@ -19,19 +19,24 @@
 		</xsl:copy>
 	</xsl:template>
 
-	<xsl:template match="/exist/scheduler/job[@name = $job_name][1]">
+	<xsl:template name="inject-job">
 		<xsl:copy-of select="$job/job"/>
+	</xsl:template>
+
+	<xsl:template match="/exist/scheduler">
+	  <xsl:copy>
+			<xsl:apply-templates/>
+
+			<xsl:if test="not(job[@name = $job_name])">
+			  <xsl:call-template name="inject-job"/>
+			</xsl:if>
+	  </xsl:copy>
+	</xsl:template>
+
+	<xsl:template match="/exist/scheduler/job[@name = $job_name][1]" priority="1">
+	  <xsl:call-template name="inject-job"/>
 	</xsl:template>
 	<xsl:template match="/exist/scheduler/job[@name = $job_name]">
 		<!-- delete duplicates -->
-	</xsl:template>
-
-	<xsl:template match="/exist/scheduler/comment()[position() = last()]">
-		<xsl:copy/>
-			<xsl:if test="not(job[@name = $job_name])">
-				<xsl:copy-of select="$job/job"/>
-				<!--<job name="check42"/>-->
-			</xsl:if>
-			<xsl:apply-templates/>
 	</xsl:template>
 </xsl:stylesheet>
