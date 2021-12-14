@@ -82,4 +82,6 @@ then
 	EOF
 	rm -f $(quote "${exist_conf}.tmp")
 	CODE
+
+	echo 'conf.xml changed' >>"${__messages_out:?}"
 fi

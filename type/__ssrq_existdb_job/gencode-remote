@@ -78,6 +78,8 @@ in
 		EOF
 		rm -f $(quote "${exist_conf}.tmp")
 		CODE
+
+		echo 'configured job' >>"${__messages_out:?}"
 		;;
 	(absent)
 		exist_conf=${exist_home:?}/etc/conf.xml
@@ -100,6 +102,8 @@ in
 		EOF
 		rm -f $(quote "${exist_conf}.tmp")
 		CODE
+
+		echo 'deleted job' >>"${__messages_out:?}"
 		;;
 	(*)
 		printf 'Invalid --state: %s\n' "${state_should}" >&2
