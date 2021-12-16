@@ -147,3 +147,7 @@ in
 		exist_init_scripts='__file/etc/systemd/system/exist-db.service'
 		;;
 esac
+
+# Start on boot
+require=${exist_init_scripts:?} \
+__start_on_boot exist-db
