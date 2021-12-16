@@ -54,7 +54,8 @@ in
 	(stop)
 		log_daemon_msg "Stopping ${service_desc}" "${init_name}"
 		start-stop-daemon --stop --quiet \
-			--remove-pidfile --pidfile "${PIDFILE}"
+			--remove-pidfile --pidfile "${PIDFILE}" \
+			--retry TERM/10/KILL/20
 		case $?
 		in
 			(0) log_end_msg 0 ;;
