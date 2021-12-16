@@ -34,7 +34,7 @@ page-size
    This is the smallest unit transferred from and to the database files. Should
    be a multiple of the file system's page size.
 
-   Must not be larger than 32767.
+   Must *not* be larger than 32767.
 sync-period
    Defines how often (in milliseconds) the database will flush its internal buffers to disk.
    The sync thread will interrupt normal database operation.
@@ -49,14 +49,16 @@ no-sync-on-commit
    performance, albeit at the risk that some transactions might be lost when the
    system suddenly fails (e.g. interrupted power).
 
+   *NB:* This argument must be used on all "currently known" eXist-db versions
+   because the feature is broken.
 
 EXAMPLES
 --------
 
 .. code-block:: sh
 
-    # Install a default eXist-db server
-    __ssrq_existdb_server main
+    # Install a eXist-db server
+    __ssrq_existdb_server --version 5.3.1 --no-sync-on-commit
 
 
 SEE ALSO
