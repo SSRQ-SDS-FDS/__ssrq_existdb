@@ -1,38 +1,34 @@
 #!/bin/sh
 ### BEGIN INIT INFO
-# Provides:          %%OPT_PACKAGE_NAME%%
+# Provides:          exist-db
 # Required-Start:    $local_fs $remote_fs $network $time
 # Required-Stop:     $local_fs $remote_fs $network $time
 # Should-Start:      $syslog
 # Should-Stop:       $syslog
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: eXist (version %%PACKAGE_VERSION%%) Native XML Database and Application Platform
+# Short-Description: eXist native XML Database and Application Platform
 ### END INIT INFO
 
 init_name=${0##*/}
-init_basename=${init_name%-*}
 
-service_desc="eXist native XML database"
+service_desc='eXist native XML database'
 
 EXIST_HOME='%%EXIST_HOME%%'
 EXIST_USER='%%EXIST_USER%%'
 
 PIDFILE="/var/run/${init_name}.pid"
 
-if test -r "/etc/default/${init_basename}"
-then
-	# shellcheck source=/dev/null
-	. "/etc/default/${init_basename}"
-fi
 if test -r "/etc/default/${init_name}"
 then
 	# shellcheck source=/dev/null
 	. "/etc/default/${init_name}"
 fi
 
+export JAVA_HOME
 export JAVA_OPTS
 
+# shellcheck source=/dev/null
 . /lib/lsb/init-functions
 
 case $1

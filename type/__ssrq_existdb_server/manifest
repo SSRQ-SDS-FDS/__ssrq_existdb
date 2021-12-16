@@ -112,21 +112,21 @@ in
 	(debian-sysvinit)
 		# install the sysvinit scripts
 
-		__file /etc/init.d/exist --state present \
+		__file /etc/init.d/exist --state absent
+		__file "/etc/init.d/${opt_package_name:?}" --state absent
+
+		__file /etc/init.d/exist-db --state present \
 			--owner 0 --group 0 --mode 0755 \
-			--source "${__type:?}/files/init/debian/base.init"
+			--source - <<-EOF
+		$(sed \
+			  -e "s/%%PACKAGE_VERSION%%/${version_selected:?}/g" \
+			  -e "s#%%EXIST_HOME%%#${exist_home:?}#g" \
+			  -e "s:%%EXIST_USER%%:${exist_user:?}:g" \
+			  -e "s:%%EXIST_GROUP%%:${exist_user:?}:g" \
+			<"${__type:?}/files/init/debian-sysv/exist-db.init")
+		EOF
 
-		sed \
-			-e "s#%%OPT_PACKAGE_NAME%%#${opt_package_name:?}#g" \
-			-e "s/%%PACKAGE_VERSION%%/${version_selected:?}/g" \
-			-e "s#%%EXIST_HOME%%#${exist_home:?}#g" \
-			-e "s:%%EXIST_USER%%:${exist_user:?}:g" \
-			<"${__type:?}/files/init/debian/exist5.init" \
-			| __file "/etc/init.d/${opt_package_name:?}" --state present \
-				  --owner 0 --group 0 --mode 0755 \
-				  --source -
-
-		exist_init_scripts="__file/etc/init.d/exist __file/etc/init.d/${opt_package_name:?}"
+		exist_init_scripts='__file/etc/init.d/exist-db'
 
 		# __file /etc/default/existdb
 		# TODO: Set JAVA_HOME
