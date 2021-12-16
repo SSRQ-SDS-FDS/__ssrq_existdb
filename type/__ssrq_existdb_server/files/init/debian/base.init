@@ -10,13 +10,7 @@
 # Short-Description: eXist Native XML Database and Application Platform
 ### END INIT INFO
 
-if test -r "/etc/default/${0##*/}"
-then
-	# shellcheck source=/dev/null
-	. "/etc/default/${0##*/}"
-fi
-
-EXIST_BASE=/opt/existdb
+EXIST_BASE=/opt/exist-
 
 # versions can be specified explicitly
 if test "$#" -ge 2
@@ -25,10 +19,10 @@ then
 	$@
 	EOF
 else
-	for dir in "${EXIST_BASE:?}"/*/
+	for dir in "${EXIST_BASE:?}"*/
 	do
 		dir=${dir%/}
-		v=${dir##*/}
+		v=${dir#"${EXIST_BASE:?}"}
 		test -x "/etc/init.d/${0##*/}-${v}" || continue
 		test -x "${dir}/bin/startup.sh" || continue
 		versions=${versions-}${versions:+ }${v}
