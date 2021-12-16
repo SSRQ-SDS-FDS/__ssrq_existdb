@@ -111,11 +111,9 @@ case ${exist_init_type:?}
 in
 	(debian-sysvinit)
 		# install the sysvinit scripts
+		sysv_init_script_path=/etc/init.d/exist-db
 
-		__file /etc/init.d/exist --state absent
-		__file "/etc/init.d/${opt_package_name:?}" --state absent
-
-		__file /etc/init.d/exist-db --state present \
+		__file "${sysv_init_script_path:?}" --state present \
 			--owner 0 --group 0 --mode 0755 \
 			--source - <<-EOF
 		$(sed \
@@ -126,13 +124,30 @@ in
 			<"${__type:?}/files/init/debian-sysv/exist-db.init")
 		EOF
 
-		exist_init_scripts='__file/etc/init.d/exist-db'
+		__file "/etc/default/${sysv_init_script_path##*/}" --state present \
+			--owner 0 --group 0 --mode 0644 \
+			--source - <<-EOF
+		##############################################################
+		# NOTE: This file is ignored when the init system is systemd #
+		##############################################################
+		#
+		# Default settings for ${sysv_init_script_path##*/}.
+		# This file is sourced by ${sysv_init_script_path}.
+		#
 
-		# __file /etc/default/existdb
-		# TODO: Set JAVA_HOME
+		# Path of the JVM to use for eXist-db:
+		# Will try to auto-detect the JVM to use if unset.
+		${init_java_home:-# }JAVA_HOME=${init_java_home:+$(quote "${init_java_home}")}
+
+		# Additional arguments to pass to the JVM:
+		${init_java_args:-# }JAVA_ARGS=${init_java_args:+$(quote "${init_java_args}")}
+		EOF
+
+		exist_init_scripts="__file${sysv_init_script_path:?} __file/etc/default/${sysv_init_script_path##*/}"
 		;;
 	(systemd)
-		__file /etc/systemd/system/exist-db.service --state present \
+		systemd_service_file=/etc/systemd/system/exist-db.service
+		__file "${systemd_service_file:?}" --state present \
 			--owner 0 --group 0 --mode 0755 \
 			--source - <<-EOF
 		$(sed \
@@ -144,7 +159,7 @@ in
 			<"${__type:?}/files/init/systemd/exist-db.service")
 		EOF
 
-		exist_init_scripts='__file/etc/systemd/system/exist-db.service'
+		exist_init_scripts="__file${systemd_service_file}"
 		;;
 esac
 
