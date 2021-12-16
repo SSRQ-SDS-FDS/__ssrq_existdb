@@ -1,0 +1,13 @@
+[Unit]
+Description=eXist native XML database
+Documentation=eXist Native XML Database and Application Platform
+After=syslog.target
+
+[Service]
+Type=simple
+User=%%EXIST_USER%%
+Group=%%EXIST_GROUP%%
+ExecStart=%%EXIST_HOME%%/bin/startup.sh
+
+[Install]
+WantedBy=multi-user.target

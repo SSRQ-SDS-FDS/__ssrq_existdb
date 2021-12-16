@@ -132,7 +132,18 @@ in
 		# TODO: Set JAVA_HOME
 		;;
 	(systemd)
-		echo 'support for systemd is not implemented' >&2
-		exit 1
+		__file /etc/systemd/system/exist-db.service --state present \
+			--owner 0 --group 0 --mode 0755 \
+			--source - <<-EOF
+		$(sed \
+			  -e "s/%%PACKAGE_VERSION%%/${version_selected:?}/g" \
+			  -e "s#%%EXIST_HOME%%#${exist_home:?}#g" \
+			..-e "s:%%EXIST_USER%%:${exist_user:?}:g" \
+			..-e "s:%%EXIST_GROUP%%:${exist_user:?}:g" \
+			..-e "s:%%EXIST_GROUP%%:${exist_user:?}:g" \
+			<"${__type:?}/files/init/systemd/exist-db.service")
+		EOF
+
+		exist_init_scripts='__file/etc/systemd/system/exist-db.service'
 		;;
 esac
