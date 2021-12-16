@@ -7,6 +7,7 @@ After=syslog.target
 Type=simple
 User=%%EXIST_USER%%
 Group=%%EXIST_GROUP%%
+ENVIRONMENT=%%ENVIRON%%
 ExecStart=%%EXIST_HOME%%/bin/startup.sh
 
 [Install]

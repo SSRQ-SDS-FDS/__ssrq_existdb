@@ -1,3 +1,5 @@
 cache-size
+java-home
+java-opts
 page-size
 sync-period

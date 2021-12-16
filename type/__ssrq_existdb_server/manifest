@@ -18,6 +18,8 @@
 # along with cdist. If not, see <http://www.gnu.org/licenses/>.
 #
 
+quote() { printf "'%s'" "$(printf '%s' "$*" | sed -e "s/'/'\\\\''/g")"; }
+
 os=$(cat "${__global:?}/explorer/os")
 
 . "${__type:?}/files/params.sh"
@@ -107,6 +109,16 @@ __link "${exist_home:?}/logs" \
 ################################################################################
 # Set up init scripts
 
+if test -f "${__object:?}/parameter/java-home"
+then
+	init_java_home=$(cat "${__object:?}/parameter/java-home")
+fi
+if test -f "${__object:?}/parameter/java-opts"
+then
+	init_java_opts=$(cat "${__object:?}/parameter/java-opts")
+	init_java_opts=${init_java_opts# }
+fi
+
 case ${exist_init_type:?}
 in
 	(debian-sysvinit)
@@ -124,6 +136,15 @@ in
 			<"${__type:?}/files/init/debian-sysv/exist-db.init")
 		EOF
 
+		defaults_var() {
+			if test -n "$2"
+			then
+				printf '%s=%s\n' "$1" "$(quote "$2")"
+			else
+				printf '# %s=\n' "$1"
+			fi
+		}
+
 		__file "/etc/default/${sysv_init_script_path##*/}" --state present \
 			--owner 0 --group 0 --mode 0644 \
 			--source - <<-EOF
@@ -137,25 +158,30 @@ in
 
 		# Path of the JVM to use for eXist-db:
 		# Will try to auto-detect the JVM to use if unset.
-		${init_java_home:-# }JAVA_HOME=${init_java_home:+$(quote "${init_java_home}")}
+		$(defaults_var JAVA_HOME "${init_java_home-}")
 
 		# Additional arguments to pass to the JVM:
-		${init_java_args:-# }JAVA_ARGS=${init_java_args:+$(quote "${init_java_args}")}
+		$(defaults_var JAVA_OPTS "${init_java_opts-}")
 		EOF
 
 		exist_init_scripts="__file${sysv_init_script_path:?} __file/etc/default/${sysv_init_script_path##*/}"
 		;;
 	(systemd)
 		systemd_service_file=/etc/systemd/system/exist-db.service
+
+		systemd_environ=${systemd_environ-}${systemd_environ:+ }${init_java_home:+JAVA_HOME=$(quote "${init_java_home}")}
+		systemd_environ=${systemd_environ-}${systemd_environ:+ }${init_java_opts:+JAVA_OPTS=$(quote "${init_java_opts}")}
+
 		__file "${systemd_service_file:?}" --state present \
 			--owner 0 --group 0 --mode 0755 \
+			--onchange 'systemctl daemon-reload' \
 			--source - <<-EOF
 		$(sed \
 			  -e "s/%%PACKAGE_VERSION%%/${version_selected:?}/g" \
 			  -e "s#%%EXIST_HOME%%#${exist_home:?}#g" \
 			..-e "s:%%EXIST_USER%%:${exist_user:?}:g" \
 			..-e "s:%%EXIST_GROUP%%:${exist_user:?}:g" \
-			..-e "s:%%EXIST_GROUP%%:${exist_user:?}:g" \
+			..-e "s:%%ENVIRON%%:${systemd_environ:?}:g" \
 			<"${__type:?}/files/init/systemd/exist-db.service")
 		EOF
 

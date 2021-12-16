@@ -21,13 +21,32 @@ version
 OPTIONAL PARAMETERS
 -------------------
 cache-size
-   maximum amount of memory to use for database page buffers.
+   The maximum amount of memory to use for database page buffers.
 
    The cache size should typically not be more than half of the size of the JVM
    heap size (set by the JVM ``-Xmx`` parameter). It can be larger if you have a
    large-memory JVM (usually a 64bit JVM).
 
    e.g. ``128M``
+java-home
+   Path to the JVM to use for eXist-db.
+   Will try to auto-detect the JVM to use if unset.
+java-opts
+   Additional options to pass to the JVM.
+
+   You may prefix the value to this argument with a :literal:` ` (space) character if
+   the string would otherwise start with a ``-`` and thus confusing cdist's
+   argument parser.
+   The first space will be removed from the value by this type.
+
+   Examples
+
+   * | set the maximum Java heap size:
+     | ``-Xmx1024m``
+   * | change the HTTP port eXist listens on:
+     | ``-Djetty.port=8080``
+   * | change the HTTPS port eXist listens on:
+     | ``-Djetty.ssl.port=8443``
 page-size
    The size of one page on the disk.
 
