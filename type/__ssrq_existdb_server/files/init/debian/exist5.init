@@ -13,7 +13,7 @@
 init_name=${0##*/}
 init_basename=${init_name%-*}
 
-service_desc="eXist (version %%PACKAGE_VERSION%%) native XML database"
+service_desc="eXist native XML database"
 
 EXIST_HOME='%%EXIST_HOME%%'
 EXIST_USER='%%EXIST_USER%%'
