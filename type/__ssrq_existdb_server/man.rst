@@ -30,7 +30,9 @@ cache-size
    e.g. ``128M``
 java-home
    Path to the JVM to use for eXist-db.
-   Will try to auto-detect the JVM to use if unset.
+
+   | If ``--java-home`` is set, this type will not manage the system JVM and just use what you specified.
+   | If not, this type will install the default JVM for the given OS.
 java-opts
    Additional options to pass to the JVM.
 

@@ -34,8 +34,11 @@ in
 		__package_apt bzip2
 		exist_download_require='__package_apt/bzip2'
 
-		# Java
-		__package_apt default-jre
+		if test ! -s "${__object:?}/parameter/java-home"
+		then
+			# Install Java if no --java-home set
+			__package_apt default-jre
+		fi
 		;;
 esac
 
