@@ -69,14 +69,31 @@ then
 		EOF
 		)
 
+	echo
+	if test -s "${__object:?}/parameter/java-home"
+	then
+		java_home=$(cat "${__object:?}/parameter/java-home")
+		# shellcheck disable=SC2016
+		printf 'java_bin=$(find %s/jre/bin %s/bin -name java 2>/dev/null | head -n1)\n' \
+			"$(quote "${java_home}")" "$(quote "${java_home}")"
+	else
+		# shellcheck disable=SC2016
+		printf 'java_bin=$(command -v java)\n'
+	fi
+
 	cat <<-CODE
+	test -x "\${java_bin}" || {
+	    echo 'Cannot find java' >&2
+	    exit 1
+	}
+
 	saxon_jar=\$(find $(quote "${exist_home:?}/lib") -name 'Saxon-HE-*.jar' -prune | head -n1)
 	test -s "\${saxon_jar}" || {
 	    echo 'Cannot find Saxon' >&2
 	    exit 1
 	}
 
-	java -jar "\${saxon_jar}" -xsl:- -s:$(quote "${exist_conf:?}") -o:$(quote "${exist_conf:?}.tmp") ${param_should# } <<'EOF' \
+	"\${java_bin}" -cp "\${saxon_jar}" net.sf.saxon.Transform -xsl:- -s:$(quote "${exist_conf:?}") -o:$(quote "${exist_conf:?}.tmp") ${param_should# } <<'EOF' \
 	&& cat $(quote "${exist_conf:?}.tmp") >$(quote "${exist_conf:?}") || exit
 	$(cat "${__type:?}/files/update-conf.xsl")
 	EOF

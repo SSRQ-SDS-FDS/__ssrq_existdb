@@ -34,15 +34,22 @@ exist_conf="${exist_home:?}/etc/conf.xml"
 # no file, no values
 test -e "${exist_conf}" || exit 0
 
+if test -s "${__object:?}/parameter/java-home"
+then
+	java_home=$(cat "${__object:?}/parameter/java-home")
+	java_bin=$(find "${java_home}/jre/bin" "${java_home}/bin" -name java 2>/dev/null | head -n1)
+else
+	java_bin=$(command -v java)
+fi
 # no java, no check
-command -v java >/dev/null || exit 0
+test -x "${java_bin}" || exit 0
 
 saxon_jar=$(find "${exist_home:?}/lib" -name 'Saxon-HE-*.jar' -prune | head -n1)
 # no saxon, no check
 test -s "${saxon_jar}" || exit 0
 
 
-java -cp "${saxon_jar}" net.sf.saxon.Query -s:"${exist_conf:?}" -q:- <<'EOF' | sort -t= -k1
+"${java_bin}" -cp "${saxon_jar}" net.sf.saxon.Query -s:"${exist_conf:?}" -q:- <<'EOF' | sort -t= -k1
 declare namespace saxon="http://saxon.sf.net/";
 declare option saxon:output "method=text";
 declare option saxon:output "encoding=utf-8";
