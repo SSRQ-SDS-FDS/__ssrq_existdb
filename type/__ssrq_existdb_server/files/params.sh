@@ -33,7 +33,7 @@ exist_home="/opt/${opt_package_name:?}"
 case $(cat "${__global:?}/explorer/os")
 in
 	(debian|devuan|ubuntu)
-		exist_data_base=/var/opt/lib/exist
+		exist_data=/var/opt/lib/exist
 
 		case $(cat "${__global:?}/explorer/init")
 		in
@@ -58,7 +58,6 @@ in
 		;;
 esac
 
-exist_data="${exist_data_base:?}/${version_selected:?}"
 exist_conf=${exist_home:?}/etc/conf.xml  # sync with conf_values explorer
 
 
@@ -70,6 +69,6 @@ exist_dist_url="https://github.com/eXist-db/exist/releases/download/eXist-${vers
 
 # make shellcheck happy (unused variables) and ensure all have been set
 : "${version_should:?}" "${version_should:?}" "${sha256_should:?}" "${size_should:?}"
-: "${exist_user:?}" "${exist_home:?}" "${exist_data_base:?}" "${exist_init_type:?}"
+: "${exist_user:?}" "${exist_home:?}" "${exist_init_type:?}"
 : "${exist_data:?}" "${exist_conf:?}"
 : "${exist_dist_url:?}"

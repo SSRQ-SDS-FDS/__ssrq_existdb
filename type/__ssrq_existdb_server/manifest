@@ -75,7 +75,7 @@ __user "${exist_user:?}" \
 	--system \
 	--shell /sbin/nologin \
 	--comment 'eXist-db service user' \
-	--home "${exist_data_base:?}" \
+	--home "${exist_data:?}" \
 	--create-home
 
 
@@ -86,7 +86,7 @@ require="__user/${exist_user:?}" \
 __directory "${exist_data}" \
 	--owner "${exist_user:?}" --group "${exist_user:?}" --mode 0755
 
-require="${exist_download_require-} __user/${exist_user:?} __directory/${exist_data}"
+require="${exist_download_require-} __user/${exist_user:?} __directory/${exist_data:?}"
 export require
 
 # Fix up data/ link
