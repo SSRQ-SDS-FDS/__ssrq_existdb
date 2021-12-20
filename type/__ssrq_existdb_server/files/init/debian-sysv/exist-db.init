@@ -45,7 +45,7 @@ in
 		in
 			(0) log_end_msg 0 ;;
 			(1) log_progress_msg "already started"
-				log_end_msg 0 ;;
+			    log_end_msg 0 ;;
 			(*) log_end_msg 1 ;;
 		esac
 		;;
@@ -58,7 +58,7 @@ in
 		in
 			(0) log_end_msg 0 ;;
 			(1) log_progress_msg "already stopped"
-				log_end_msg 0 ;;
+			    log_end_msg 0 ;;
 			(*) log_end_msg 1 ;;
 		esac
 		;;
