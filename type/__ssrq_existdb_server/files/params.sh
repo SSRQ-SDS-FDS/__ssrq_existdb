@@ -61,7 +61,15 @@ esac
 exist_data="${exist_data_base:?}/${version_selected:?}"
 exist_conf=${exist_home:?}/etc/conf.xml  # sync with conf_values explorer
 
+
+################################################################################
+# Generate download URL
+
+exist_dist_url="https://github.com/eXist-db/exist/releases/download/eXist-${version_selected:?}/exist-distribution-${version_selected:?}-unix.tar.bz2"
+
+
 # make shellcheck happy (unused variables) and ensure all have been set
 : "${version_should:?}" "${version_should:?}" "${sha256_should:?}" "${size_should:?}"
 : "${exist_user:?}" "${exist_home:?}" "${exist_data_base:?}" "${exist_init_type:?}"
 : "${exist_data:?}" "${exist_conf:?}"
+: "${exist_dist_url:?}"

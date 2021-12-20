@@ -85,3 +85,68 @@ then
 
 	echo 'conf.xml changed' >>"${__messages_out:?}"
 fi
+
+
+################################################################################
+# Initialise eXist-db after __unpack
+
+# FIXME: the file name should be escaped to be valid in a POSIX BRE
+if grep -q -e "^__unpack/tmp/${exist_dist_url##*/}" "${__messages_in:?}"
+then
+	case ${exist_init_type:?}
+	in
+		(debian-sysvinit)
+			cat <<-EOF
+
+			if /etc/init.d/exist-db status >/dev/null 2>&1
+			then
+			    /etc/init.d/exist-db restart
+			else
+			    /etc/init.d/exist-db start
+			fi || {
+			    echo 'Failed to start eXist-db' >&2
+			    exit 1
+			}
+			EOF
+			;;
+		(systemd)
+			echo 'systemctl start exist-db.service'
+			;;
+		(*)
+			echo 'unsupported init' >&2
+			exit 1
+			;;
+	esac
+	echo 'start service' >>"${__messages_out:?}"
+
+	cat <<-EOF
+
+	exist_logfile=$(quote "${exist_home:?}/logs/exist.log")
+
+	# wait for log file to be created
+	while test \$((_tries)) -lt 10
+	do
+	    if test -f "\${exist_logfile}"
+	    then
+	        break
+	    fi
+	    sleep 1
+	    : \$((_tries+=1))
+	done
+
+	# wait a maximum of 5 minutes for eXist to start up so that other types can
+	# depend on eXist to be running.
+	# a start up is considered to have failed if either no log file exists after
+	# 10 seconds (see above) or the magic line does not appear in the log file
+	# after 5 minutes.
+	test -f "\${exist_logfile}" \\
+	&& tail -n0 -F "\${exist_logfile:?}" \\
+	   | timeout -v 300 \\
+	       sed -n -e '/Server has started, listening on:/q' \\
+	|| {
+	    echo 'It seems eXist-db failed to start.' >&2
+	    echo 'Aborting.' >&2
+	    exit 1
+	}
+	EOF
+fi

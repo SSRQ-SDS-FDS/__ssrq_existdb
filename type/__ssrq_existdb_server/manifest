@@ -48,8 +48,6 @@ esac
 
 download_required=true  # FIXME
 
-exist_dist_url="https://github.com/eXist-db/exist/releases/download/eXist-${version_selected:?}/exist-distribution-${version_selected:?}-unix.tar.bz2"
-
 if ${download_required}
 then
 	__download "/tmp/${exist_dist_url##*/}" \
