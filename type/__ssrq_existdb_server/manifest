@@ -48,9 +48,9 @@ esac
 ################################################################################
 # Download and unpack dist tarball
 
-download_required=true  # FIXME
-
-if ${download_required}
+# NOTE: the following check is a bit fiddly, but it should work okay enough.
+if test ! -s "${__object:?}/explorer/archive-sum" \
+|| test "$(cut -d' ' -f2 "${__object:?}/explorer/archive-sum")" -ne "${size_should:?}"
 then
 	__download "/tmp/${exist_dist_url##*/}" \
 		--url "${exist_dist_url}" \
@@ -61,7 +61,7 @@ then
 	require=${exist_download_require} \
 	__unpack "/tmp/${exist_dist_url##*/}" \
 		--destination "${exist_home:?}" \
-		--sum-file "${exist_home:?}/.${exist_dist_url##*/}.cdist__unpack_sum" \
+		--sum-file "${exist_home:?}/.cdist__unpack_sum" \
 		--tar-strip 1 \
 		--tar-extra-args ' -o'
 	exist_download_require="${exist_download_require-}${exist_download_require:+ }__unpack/tmp/${exist_dist_url##*/}"

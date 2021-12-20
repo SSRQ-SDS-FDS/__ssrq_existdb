@@ -25,7 +25,7 @@ test "${version_should}" = "${version_selected}" || {
 
 exist_user='existdb'
 
-# sync the following variables with explorer/conf_values
+# sync the following variables with explorer/conf_values and explorer/archive-sum
 package_name='exist'
 opt_package_name="${package_name:?}-${version_should:?}"
 exist_home="/opt/${opt_package_name:?}"

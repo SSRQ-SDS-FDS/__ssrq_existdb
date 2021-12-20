@@ -1,0 +1,36 @@
+#!/bin/sh -e
+#
+# 2021 Dennis Camera (dennis.camera at ssrq-sds-fds.ch)
+#
+# This file is part of cdist.
+#
+# cdist is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# cdist is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with cdist. If not, see <http://www.gnu.org/licenses/>.
+#
+# This explorer returns the cksum(1) of the extracted tarball in EXIST_HOME.
+#
+
+version_should=$(cat "${__object:?}/parameter/version")
+
+# NOTE: Sync these values with files/params.sh and explorer/conf_values
+package_name='exist'
+opt_package_name="${package_name:?}-${version_should:?}"
+exist_home="/opt/${opt_package_name:?}"
+
+# shellcheck disable=SC2015
+test -d "${exist_home:?}" && test -f "${exist_home:?}/.cdist__unpack_sum" || {
+	# absent
+	exit 0
+}
+
+sed -e 's/^\([0-9]\{10\}\)\(.*\)/\1 \2/' "${exist_home:?}/.cdist__unpack_sum"
