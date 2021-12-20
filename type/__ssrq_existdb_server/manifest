@@ -30,10 +30,6 @@ os=$(cat "${__global:?}/explorer/os")
 case ${os}
 in
 	(debian|devuan|ubuntu)
-		# we require bzip2 to unpack the eXist DB dist tarball
-		__package_apt bzip2
-		exist_download_require='__package_apt/bzip2'
-
 		if test ! -s "${__object:?}/parameter/java-home"
 		then
 			# Install Java if no --java-home set
