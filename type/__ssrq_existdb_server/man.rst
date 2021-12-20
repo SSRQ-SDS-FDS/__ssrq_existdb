@@ -56,6 +56,9 @@ page-size
    be a multiple of the file system's page size.
 
    Must *not* be larger than 32767.
+
+   **NB:** the database needs to be reinitialised (i.e. remove all files from data
+   directory) if this value is changed after installation.
 sync-period
    Defines how often (in milliseconds) the database will flush its internal buffers to disk.
    The sync thread will interrupt normal database operation.
