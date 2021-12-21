@@ -33,7 +33,7 @@ in
 		if test ! -s "${__object:?}/parameter/java-home"
 		then
 			# Install Java if no --java-home set
-			__package_apt default-jre
+			__package_apt default-jre-headless
 		fi
 		;;
 	(*)
