@@ -39,7 +39,7 @@ then
 	java_home=$(cat "${__object:?}/parameter/java-home")
 	java_bin=$(find "${java_home}/jre/bin" "${java_home}/bin" -name java 2>/dev/null | head -n1)
 else
-	java_bin=$(command -v java)
+	java_bin=$(command -v java) || true
 fi
 # no java, no check
 test -x "${java_bin}" || exit 0
