@@ -45,9 +45,9 @@ java-opts
 
    * | set the maximum Java heap size:
      | ``-Xmx1024m``
-   * | change the HTTP port eXist listens on:
+   * | change the HTTP port Jetty/eXist-db listens on:
      | ``-Djetty.port=8080``
-   * | change the HTTPS port eXist listens on:
+   * | change the HTTPS port Jetty/eXist-db listens on:
      | ``-Djetty.ssl.port=8443``
 page-size
    The size of one page on the disk.

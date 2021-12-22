@@ -1,6 +1,6 @@
 #!/bin/sh
 ### BEGIN INIT INFO
-# Provides:          exist-db
+# Provides:          existdb
 # Required-Start:    $local_fs $remote_fs $network $time
 # Required-Stop:     $local_fs $remote_fs $network $time
 # Should-Start:      $syslog

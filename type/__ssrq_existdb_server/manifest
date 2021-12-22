@@ -96,17 +96,17 @@ __link "${exist_home:?}/data" \
 
 # Fix up logs/ link
 require="__user/${exist_user:?}" \
-__directory "/var/opt/log/exist/${version_selected:?}" \
+__directory "${exist_logdir:?}" \
 	--owner "${exist_user:?}" --group "${exist_user:?}" --mode 0750 \
 	--parents
 
 __directory "${exist_home:?}/logs" \
 	--state absent
 
-require="__directory/${exist_home:?}/logs __directory/var/opt/log/exist/${version_selected:?}" \
+require="__directory/${exist_home:?}/logs __directory${exist_logdir:?}" \
 __link "${exist_home:?}/logs" \
 	--type symbolic \
-	--source "/var/opt/log/exist/${version_selected:?}"
+	--source "${exist_logdir:?}"
 
 
 ################################################################################
@@ -126,7 +126,7 @@ case ${exist_init_type:?}
 in
 	(debian-sysvinit)
 		# install the sysvinit scripts
-		sysv_init_script_path=/etc/init.d/exist-db
+		sysv_init_script_path=/etc/init.d/existdb
 
 		__file "${sysv_init_script_path:?}" --state present \
 			--owner 0 --group 0 --mode 0755 \
@@ -136,7 +136,7 @@ in
 			  -e "s#%%EXIST_HOME%%#${exist_home:?}#g" \
 			  -e "s:%%EXIST_USER%%:${exist_user:?}:g" \
 			  -e "s:%%EXIST_GROUP%%:${exist_user:?}:g" \
-			<"${__type:?}/files/init/debian-sysv/exist-db.init")
+			<"${__type:?}/files/init/debian-sysv/existdb.init")
 		EOF
 
 		defaults_var() {
@@ -170,7 +170,7 @@ in
 		exist_init_scripts="__file${sysv_init_script_path:?} __file/etc/default/${sysv_init_script_path##*/}"
 		;;
 	(systemd)
-		systemd_service_file=/etc/systemd/system/exist-db.service
+		systemd_service_file=/etc/systemd/system/existdb.service
 
 		systemd_environ=${systemd_environ-}${systemd_environ:+ }${init_java_home:+JAVA_HOME=$(quote "${init_java_home}")}
 		systemd_environ=${systemd_environ-}${systemd_environ:+ }${init_java_opts:+JAVA_OPTS=$(quote "${init_java_opts}")}
@@ -185,7 +185,7 @@ in
 			..-e "s:%%EXIST_USER%%:${exist_user:?}:g" \
 			..-e "s:%%EXIST_GROUP%%:${exist_user:?}:g" \
 			..-e "s:%%ENVIRON%%:${systemd_environ:?}:g" \
-			<"${__type:?}/files/init/systemd/exist-db.service")
+			<"${__type:?}/files/init/systemd/existdb.service")
 		EOF
 
 		exist_init_scripts="__file${systemd_service_file}"
@@ -194,4 +194,4 @@ esac
 
 # Start on boot
 require=${exist_init_scripts:?} \
-__start_on_boot exist-db
+__start_on_boot existdb

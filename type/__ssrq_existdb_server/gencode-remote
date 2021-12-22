@@ -24,7 +24,7 @@ quote() { printf "'%s'" "$(printf '%s' "$*" | sed -e "s/'/'\\\\''/g")"; }
 
 
 ################################################################################
-# Update eXist's conf.xml
+# Update eXist-db's conf.xml
 
 conf_should=$(
 	cset() { printf '%s=%s\n' "$1" "$2"; }
@@ -115,11 +115,11 @@ then
 		(debian-sysvinit)
 			cat <<-EOF
 
-			if /etc/init.d/exist-db status >/dev/null 2>&1
+			if /etc/init.d/existdb status >/dev/null 2>&1
 			then
-			    /etc/init.d/exist-db restart
+			    /etc/init.d/existdb restart
 			else
-			    /etc/init.d/exist-db start
+			    /etc/init.d/existdb start
 			fi || {
 			    echo 'Failed to start eXist-db' >&2
 			    exit 1
@@ -127,7 +127,7 @@ then
 			EOF
 			;;
 		(systemd)
-			echo 'systemctl start exist-db.service'
+			echo 'systemctl start existdb.service'
 			;;
 		(*)
 			echo 'unsupported init' >&2
@@ -152,7 +152,7 @@ then
 	done
 
 	# wait a maximum of 5 minutes for eXist to start up so that other types can
-	# depend on eXist to be running.
+	# depend on eXist-db to be running.
 	# a start up is considered to have failed if either no log file exists after
 	# 10 seconds (see above) or the magic line does not appear in the log file
 	# after 5 minutes.

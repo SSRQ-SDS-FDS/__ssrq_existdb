@@ -21,19 +21,21 @@ test "${version_should}" = "${version_selected}" || {
 
 
 ################################################################################
-# Define OS-specific variables
+# Define variables
 
 exist_user='existdb'
 
 # sync the following variables with explorer/conf_values and explorer/archive-sum
-package_name='exist'
-opt_package_name="${package_name:?}-${version_should:?}"
+package_name='existdb'
+opt_package_name="${package_name:?}-${version_selected:?}"
 exist_home="/opt/${opt_package_name:?}"
 
+# OS-specific variables
 case $(cat "${__global:?}/explorer/os")
 in
 	(debian|devuan|ubuntu)
-		exist_data=/var/opt/lib/exist
+		exist_data=/var/opt/lib/existdb
+		exist_logdir=/var/opt/log/existdb/${version_selected}
 
 		case $(cat "${__global:?}/explorer/init")
 		in
@@ -70,5 +72,5 @@ exist_dist_url="https://github.com/eXist-db/exist/releases/download/eXist-${vers
 # make shellcheck happy (unused variables) and ensure all have been set
 : "${version_should:?}" "${version_should:?}" "${sha256_should:?}" "${size_should:?}"
 : "${exist_user:?}" "${exist_home:?}" "${exist_init_type:?}"
-: "${exist_data:?}" "${exist_conf:?}"
+: "${exist_data:?}" "${exist_logdir:?}" "${exist_conf:?}"
 : "${exist_dist_url:?}"

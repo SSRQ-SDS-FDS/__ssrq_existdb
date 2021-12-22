@@ -61,9 +61,9 @@ state
    Must be one of:
 
    ``present``
-      the job is defined in the eXist config file
+      the job is defined in the eXist-db config file
    ``absent``
-      the job is not defined in the eXist config file
+      the job is not defined in the eXist-db config file
 xquery
    the path to the XQuery file stored in the database that implements this job,
    e.g. ``/db/myCollection/myJob.xql``.
@@ -86,13 +86,13 @@ EXAMPLES
 
 .. code-block:: sh
 
-   # Create a job for periodic backups
+   # Create a job for periodic backups to /var/backups/existdb
    __ssrq_existdb_job periodic-backups \
       --version 5.3.0 \
       --type system \
       --class org.exist.storage.ConsistencyCheckTask \
       --cron '0 0 * * * ?' \
-      --parameter output=export \
+      --parameter output=/var/backups/existdb \
       --parameter backup=yes \
       --parameter incremental=no \
       --parameter incremental-check=no \

@@ -23,7 +23,7 @@
 version_should=$(cat "${__object:?}/parameter/version")
 
 # NOTE: Sync these values with files/params.sh and explorer/conf_values
-package_name='exist'
+package_name='existdb'
 opt_package_name="${package_name:?}-${version_should:?}"
 exist_home="/opt/${opt_package_name:?}"
 
