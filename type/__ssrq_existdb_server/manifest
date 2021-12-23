@@ -90,6 +90,8 @@ require="${exist_download_require-} __user/${exist_user:?} __directory/${exist_d
 export require
 
 # Fix up data/ link
+# NOTE: user manages data directory as its home
+require="__user/${exist_user:?}"
 __link "${exist_home:?}/data" \
 	--type symbolic \
 	--source "${exist_data:?}"
