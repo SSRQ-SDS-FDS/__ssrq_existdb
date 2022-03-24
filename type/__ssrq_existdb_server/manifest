@@ -49,8 +49,7 @@ esac
 # Download and unpack dist tarball
 
 # NOTE: the following check is a bit fiddly, but it should work okay enough.
-if test ! -s "${__object:?}/explorer/archive-sum" \
-|| test "$(cut -d' ' -f2 "${__object:?}/explorer/archive-sum")" -ne "${size_should:?}"
+if ! grep -q -e "${size_should:?}$" <"${__object:?}/explorer/archive-sum"
 then
 	__download "/tmp/${exist_dist_url##*/}" \
 		--url "${exist_dist_url}" \

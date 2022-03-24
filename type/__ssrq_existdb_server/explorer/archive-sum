@@ -33,4 +33,4 @@ test -d "${exist_home:?}" && test -f "${exist_home:?}/.cdist__unpack_sum" || {
 	exit 0
 }
 
-sed -e 's/^\([0-9]\{10\}\)\(.*\)/\1 \2/' "${exist_home:?}/.cdist__unpack_sum"
+cat "${exist_home:?}/.cdist__unpack_sum"
