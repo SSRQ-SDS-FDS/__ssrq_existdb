@@ -1,1 +1,4 @@
 no-sync-on-commit
+disable-guest-xmlrpc
+disable-rest-interface
+xquery-hide-errors

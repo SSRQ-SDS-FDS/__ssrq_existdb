@@ -61,6 +61,7 @@ in
 esac
 
 exist_conf=${exist_home:?}/etc/conf.xml  # sync with conf_values explorer
+web_conf=${exist_home:?}/etc/webapp/WEB-INF/web.xml  # sync with conf_values explorer
 
 
 ################################################################################
@@ -72,5 +73,5 @@ exist_dist_url="https://github.com/eXist-db/exist/releases/download/eXist-${vers
 # make shellcheck happy (unused variables) and ensure all have been set
 : "${version_should:?}" "${version_should:?}" "${sha256_should:?}" "${size_should:?}"
 : "${exist_user:?}" "${exist_home:?}" "${exist_init_type:?}"
-: "${exist_data:?}" "${exist_logdir:?}" "${exist_conf:?}"
+: "${exist_data:?}" "${exist_logdir:?}" "${exist_conf:?}" "${web_conf:?}"
 : "${exist_dist_url:?}"

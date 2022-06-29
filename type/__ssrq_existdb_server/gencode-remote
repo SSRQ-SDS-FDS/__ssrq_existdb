@@ -36,8 +36,27 @@ conf_should=$(
 		else
 			cset sync-on-commit no
 		fi
+		if test ! -f "${__object:?}/parameter/disable-guest-xmlrpc"
+		then
+			cset enable-guest-xmlrpc true
+		else
+			cset enable-guest-xmlrpc false
+		fi
+		if test -f "${__object:?}/parameter/disable-rest-interface"
+		then
+			cset rest-intf-hidden true
+		else
+			cset rest-intf-hidden false
+		fi
+		if test -f "${__object:?}/parameter/xquery-hide-errors"
+		then
+			cset xquery-hide-errors true
+		else
+			cset xquery-hide-errors false
+		fi
 
-		for _opt in cache-size page-size sync-period
+		for _opt in cache-size page-size sync-period xquery-submission xupdate-submission
+
 		do
 			if test -f "${__object:?}/parameter/${_opt}"
 			then
@@ -46,7 +65,7 @@ conf_should=$(
 		done
 
 		cset files "${exist_data:?}"
-	} | LC_ALL=C sort -t= -k1)
+	} | LC_ALL=C sort -t '=' -k 1)
 
 
 if ! {
@@ -56,7 +75,7 @@ if ! {
 		| LC_ALL=C join -t= -v1 -1 1 -2 1 "${__object:?}/explorer/conf_values" -
 	} | LC_ALL=C sort -t= -k1 | cmp -s "${__object:?}/explorer/conf_values" -
 then
-	# conf must be updated
+	# config files must be updated
 
 	# quote $conf_should values
 	param_should=$(
@@ -67,7 +86,8 @@ then
 		done <<-EOF
 		${conf_should}
 		EOF
-		)
+				)
+	param_should=${param_should# }
 
 	echo
 	if test -s "${__object:?}/parameter/java-home"
@@ -93,14 +113,26 @@ then
 	    exit 1
 	}
 
-	"\${java_bin}" -cp "\${saxon_jar}" net.sf.saxon.Transform -xsl:- -s:$(quote "${exist_conf:?}") -o:$(quote "${exist_conf:?}.tmp") ${param_should# } <<'EOF' \
+	# update etc/conf.xml
+	"\${java_bin}" -cp "\${saxon_jar}" net.sf.saxon.Transform -xsl:- -s:$(quote "${exist_conf:?}") -o:$(quote "${exist_conf:?}.tmp") ${param_should} <<'EOF' \
 	&& cat $(quote "${exist_conf:?}.tmp") >$(quote "${exist_conf:?}") || exit
 	$(cat "${__type:?}/files/update-conf.xsl")
 	EOF
 	rm -f $(quote "${exist_conf}.tmp")
+
+	# update etc/webapp/WEB-INF/web.xml
+	"\${java_bin}" -cp "\${saxon_jar}" net.sf.saxon.Transform -xsl:- -s:$(quote "${web_conf:?}") -o:$(quote "${web_conf:?}.tmp") ${param_should} <<'EOF' \
+	&& cat $(quote "${web_conf:?}.tmp") >$(quote "${web_conf:?}") || exit
+	$(cat "${__type:?}/files/update-web.xsl")
+	EOF
+	rm -f $(quote "${web_conf}.tmp")
+
 	CODE
 
 	echo 'conf.xml changed' >>"${__messages_out:?}"
+	echo 'web.xml changed' >>"${__messages_out:?}"
+
+	exist_restart_required=true
 fi
 
 
@@ -108,7 +140,8 @@ fi
 # Initialise eXist-db after __unpack
 
 # FIXME: the file name should be escaped to be valid in a POSIX BRE
-if grep -q -e "^__unpack/tmp/${exist_dist_url##*/}" "${__messages_in:?}"
+if ${exist_restart_required:-false} \
+	|| grep -q -e "^__unpack/tmp/${exist_dist_url##*/}" "${__messages_in:?}"
 then
 	case ${exist_init_type:?}
 	in

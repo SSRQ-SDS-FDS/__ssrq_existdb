@@ -29,10 +29,9 @@ version_should=$(cat "${__object:?}/parameter/version")
 package_name='existdb'
 opt_package_name="${package_name:?}-${version_should:?}"
 exist_home="/opt/${opt_package_name:?}"
-exist_conf="${exist_home:?}/etc/conf.xml"
 
-# no file, no values
-test -e "${exist_conf}" || exit 0
+exist_conf="${exist_home:?}/etc/conf.xml"
+web_conf="${exist_home:?}/etc/webapp/WEB-INF/web.xml"
 
 if test -s "${__object:?}/parameter/java-home"
 then
@@ -49,16 +48,42 @@ saxon_jar=$(find "${exist_home:?}/lib" -name 'Saxon-HE-*.jar' -prune | head -n1)
 test -s "${saxon_jar}" || exit 0
 
 
-"${java_bin}" -cp "${saxon_jar}" net.sf.saxon.Query -s:"${exist_conf:?}" -q:- <<'EOF' | sort -t= -k1
-declare namespace saxon="http://saxon.sf.net/";
-declare option saxon:output "method=text";
-declare option saxon:output "encoding=utf-8";
+{
+	if test -e "${exist_conf}"
+	then
+		"${java_bin}" -cp "${saxon_jar}" net.sf.saxon.Query -s:"${exist_conf:?}" -q:- <<-'EOF'
+		declare namespace saxon="http://saxon.sf.net/";
 
-(
-  "cache-size=" || /exist/db-connection/@cacheSize,
-  "files=" || /exist/db-connection/@files,
-  "page-size=" ||/exist/db-connection/@pageSize,
-  "sync-period=" || /exist/db-connection/pool/@sync-period,
-  "sync-on-commit=" || /exist/db-connection/recovery/@sync-on-commit
-) => string-join("&#10;")
-EOF
+		declare option saxon:output "method=text";
+		declare option saxon:output "encoding=utf-8";
+
+		(
+		  "cache-size=" || /exist/db-connection/@cacheSize,
+		  "files=" || /exist/db-connection/@files,
+		  "page-size=" ||/exist/db-connection/@pageSize,
+		  "sync-period=" || /exist/db-connection/pool/@sync-period,
+		  "sync-on-commit=" || /exist/db-connection/recovery/@sync-on-commit
+		) ! concat(., "&#10;") => string-join("")
+		EOF
+	fi
+
+	if test -e "${web_conf}"
+	then
+		"${java_bin}" -cp "${saxon_jar}" net.sf.saxon.Query -s:"${web_conf:?}" -q:- <<-'EOF'
+		declare namespace saxon="http://saxon.sf.net/";
+		declare namespace webapp="http://xmlns.jcp.org/xml/ns/javaee";
+
+		declare option saxon:output "method=text";
+		declare option saxon:output "encoding=utf-8";
+
+		(
+		  "enable-guest-xmlrpc=" || //webapp:servlet[./webapp:servlet-class='org.exist.xmlrpc.RpcServlet']/webapp:init-param[./webapp:param-name='useDefaultUser']/webapp:param-value/text(),
+		  "rest-intf-hidden=" || //webapp:servlet[./webapp:servlet-class='org.exist.http.servlets.EXistServlet']/webapp:init-param[./webapp:param-name='hidden']/webapp:param-value/text(),
+		  "xquery-submission=" || //webapp:servlet[./webapp:servlet-class='org.exist.http.servlets.EXistServlet']/webapp:init-param[./webapp:param-name='xquery-submission']/webapp:param-value/text(),
+		  "xupdate-submission=" || //webapp:servlet[./webapp:servlet-class='org.exist.http.servlets.EXistServlet']/webapp:init-param[./webapp:param-name='xupdate-submission']/webapp:param-value/text(),
+		  "xquery-hide-errors=" || //webapp:servlet[./webapp:servlet-class='org.exist.http.servlets.XQueryServlet']/webapp:init-param[./webapp:param-name='hide-error-messages']/webapp:param-value/text()
+		) ! concat(., "&#10;") => string-join("")
+		EOF
+	fi
+} \
+| LC_ALL=C sort -t '=' -k 1

@@ -62,10 +62,44 @@ page-size
 sync-period
    Defines how often (in milliseconds) the database will flush its internal buffers to disk.
    The sync thread will interrupt normal database operation.
+xquery-submission
+   Determines who is allowed to submit and execute XQuery to the
+   ``EXistServlet``.
+
+   For example the REST server allows submission via ``GET`` using the
+   ``_query`` query parameter and via ``POST`` using an XML document with a
+   ``<query/>`` document element.
+
+   Acceptable values:
+   ``disabled``
+      Does not allow anyone to submit XQuery for execution.
+   ``enabled``
+      Allows anyone to submit XQuery for execution.
+   ``authenticated``
+      Allows any authenticated (non-guest) user to submit XQuery for execution.
+xupdate-submission
+   Configure who is allowed to submit and execute XUpdate scripts to the
+   ``EXistServlet``.
+
+   Acceptable values:
+   ``disabled``
+      Does not allow anyone to submit XUpdate for execution.
+   ``enabled``
+      Allows anyone to submit XUpdate for execution.
+   ``authenticated``
+      Allows any authenticated (non-guest) user to submit XUpdate for execution.
 
 
 BOOLEAN PARAMETERS
 ------------------
+disable-guest-xmlrpc
+   Prohibit the guest user from accessing the XML RPC API.
+
+   By default, if no user is specified in an XML RPC request,
+   the guest user account will be used.
+disable-rest-interface
+   Disable the REST interface, i.e. only requests coming from the URL rewriting
+   will be processed.
 no-sync-on-commit
    Do not sync the journal to disk when a database transaction is commited.
 
@@ -75,6 +109,9 @@ no-sync-on-commit
 
    *NB:* This argument must be used on all "currently known" eXist-db versions
    because the feature is broken.
+xquery-hide-errors
+   Omit the error description in XQuery error responses.
+
 
 EXAMPLES
 --------
