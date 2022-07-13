@@ -71,6 +71,7 @@ xquery-submission
    ``<query/>`` document element.
 
    Acceptable values:
+
    ``disabled``
       Does not allow anyone to submit XQuery for execution.
    ``enabled``
@@ -82,6 +83,7 @@ xupdate-submission
    ``EXistServlet``.
 
    Acceptable values:
+
    ``disabled``
       Does not allow anyone to submit XUpdate for execution.
    ``enabled``
